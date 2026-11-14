@@ -934,11 +934,14 @@
         { id: 'cyber_optic', name: 'Cyber Optic', desc: 'Full wrap tech visor' }
       ],
       hairStyles: [
-        { id: 'spiky_plume', name: 'Warrior Plume' },
-        { id: 'ponytail_crest', name: 'War Ponytail' },
-        { id: 'mohawk_fin', name: 'Cyber Mohawk' },
-        { id: 'twin_tails', name: 'Twin Streamers' },
-        { id: 'none', name: 'Clean Helm' }
+        { id: 'spiky_plume', name: 'Spiky Warrior' },
+        { id: 'ponytail_crest', name: 'High Ponytail' },
+        { id: 'wavy_locks', name: 'Flowing Locks' },
+        { id: 'samurai_topknot', name: 'Samurai Topknot' },
+        { id: 'braided_crown', name: 'Valkyrie Braids' },
+        { id: 'mohawk_fin', name: 'Bladed Mohawk' },
+        { id: 'twin_tails', name: 'Twin Tails' },
+        { id: 'none', name: 'Clean / Bald' }
       ],
       capeStyles: [
         { id: 'split_cape', name: 'Twin War-Cape' },
@@ -2031,74 +2034,147 @@
       const resolvedHair = parseInt((av.hairColor || '#fbbf24').replace('#', '0x'), 16);
 
       const root = new THREE.Group();
-      const bodyMat = polyMat(isUnarmoured ? 0x57534e : arm.primary, {
-        roughness: isUnarmoured ? 0.88 : 0.4,
-        metalness: isUnarmoured ? 0.04 : 0.64
+      const bodyMat = polyMat(isUnarmoured ? 0x334155 : arm.primary, {
+        roughness: isUnarmoured ? 0.82 : 0.36,
+        metalness: isUnarmoured ? 0.08 : 0.68
+      });
+      const tunicTrimMat = polyMat(isUnarmoured ? 0x1e293b : arm.primary, {
+        roughness: 0.78,
+        metalness: 0.14
       });
       const darkPlateMat = polyMat(0x1e293b, {
-        roughness: isUnarmoured ? 0.85 : 0.48,
-        metalness: isUnarmoured ? 0.05 : 0.56
+        roughness: isUnarmoured ? 0.82 : 0.44,
+        metalness: isUnarmoured ? 0.08 : 0.60
       });
-      const trouserMat = polyMat(0x292524, { roughness: 0.9, metalness: 0.02 });
-      const leatherMat = polyMat(0x451a03, { roughness: 0.82, metalness: 0.08 });
-      const skinMat = polyMat(resolvedSkin, { roughness: 0.58, metalness: 0.08 });
-      const hairMat = polyMat(resolvedHair, { roughness: 0.45, metalness: 0.28 });
+      const trouserMat = polyMat(0x1f2937, { roughness: 0.86, metalness: 0.05 });
+      const leatherMat = polyMat(0x451a03, { roughness: 0.76, metalness: 0.14 });
+      const buckleMat = polyMat(0xd97706, { roughness: 0.32, metalness: 0.82 });
+      const skinMat = polyMat(resolvedSkin, { roughness: 0.54, metalness: 0.06 });
+      const hairMat = polyMat(resolvedHair, { roughness: 0.42, metalness: 0.24 });
+      const hairShadowMat = polyMat(resolvedHair, { roughness: 0.56, metalness: 0.15 });
+      const eyeWhiteMat = polyMat(0xf8fafc, { roughness: 0.25, metalness: 0.05 });
       const accentMat = polyMat(resolvedAccent, {
-        roughness: isUnarmoured ? 0.72 : 0.26,
-        metalness: isUnarmoured ? 0.12 : 0.86
+        roughness: isUnarmoured ? 0.55 : 0.24,
+        metalness: isUnarmoured ? 0.35 : 0.88
       });
       const glowMat = polyMat(resolvedEye, { emissive: resolvedEye, emissiveIntensity: 1.65, roughness: 0.2 });
-      const capeMat = polyMat(arm.cape, { roughness: 0.78, metalness: 0.15, side: THREE.DoubleSide });
+      const capeMat = polyMat(arm.cape, { roughness: 0.76, metalness: 0.16, side: THREE.DoubleSide });
 
       const torso = new THREE.Group();
       torso.position.y = 1.18;
 
-      const abdomen = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.25, 0.21, 0.38, isUnarmoured ? 6 : 4),
-        isUnarmoured ? bodyMat : darkPlateMat
-      );
-      abdomen.position.y = -0.22;
-      abdomen.rotation.y = Math.PI / 4;
-      abdomen.scale.set(1.18, 1.0, 0.8);
+      // Anatomical Neck Column & Collar Integration
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.086, 0.108, 0.20, 8), skinMat);
+      neck.position.y = 0.50;
+      torso.add(neck);
 
+      // Sculpted Pelvis & Hip Block (connects waist cleanly to legs at y = 0.78)
+      const pelvis = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.245, 0.225, 0.20, 8),
+        isUnarmoured ? trouserMat : darkPlateMat
+      );
+      pelvis.position.y = -0.43;
+      pelvis.scale.set(1.16, 1.0, 0.84);
+      torso.add(pelvis);
+
+      // Tapered Core / Abdomen
+      const abdomen = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.265, 0.225, 0.34, isUnarmoured ? 8 : 6),
+        isUnarmoured ? tunicTrimMat : darkPlateMat
+      );
+      abdomen.position.y = -0.20;
+      abdomen.scale.set(1.18, 1.0, 0.82);
+
+      // Heroic V-Taper Upper Chest / Cuirass
       const cuirass = new THREE.Mesh(
-        new THREE.CylinderGeometry(isUnarmoured ? 0.31 : 0.41, isUnarmoured ? 0.24 : 0.27, 0.56, isUnarmoured ? 6 : 4),
+        new THREE.CylinderGeometry(isUnarmoured ? 0.34 : 0.42, isUnarmoured ? 0.26 : 0.28, 0.52, isUnarmoured ? 8 : 6),
         bodyMat
       );
-      cuirass.position.y = 0.16;
-      cuirass.rotation.y = Math.PI / 4;
-      cuirass.scale.set(isUnarmoured ? 1.12 : 1.25, 1.0, isUnarmoured ? 0.74 : 0.8);
+      cuirass.position.y = 0.17;
+      cuirass.scale.set(isUnarmoured ? 1.18 : 1.26, 1.0, isUnarmoured ? 0.78 : 0.82);
       cuirass.castShadow = true;
       if (!isUnarmoured) {
-        addPolyEdgeLines(cuirass, resolvedAccent, 0.3);
+        addPolyEdgeLines(cuirass, resolvedAccent, 0.32);
       }
 
+      // Sculpted Pectoral & Back Lat Definitions
+      [-0.145, 0.145].forEach(px => {
+        const pec = new THREE.Mesh(
+          new THREE.BoxGeometry(0.22, 0.22, 0.09),
+          isUnarmoured ? bodyMat : accentMat
+        );
+        pec.position.set(px, 0.24, 0.21);
+        pec.rotation.y = px < 0 ? 0.14 : -0.14;
+        pec.rotation.x = -0.08;
+        torso.add(pec);
+
+        const lat = new THREE.Mesh(
+          new THREE.BoxGeometry(0.20, 0.30, 0.08),
+          isUnarmoured ? tunicTrimMat : darkPlateMat
+        );
+        lat.position.set(px * 1.05, 0.21, -0.20);
+        lat.rotation.y = px < 0 ? -0.16 : 0.16;
+        torso.add(lat);
+      });
+
+      // Waist Belt & Forged Buckle
       const belt = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.245, 0.255, 0.11, 6),
+        new THREE.CylinderGeometry(0.255, 0.265, 0.105, 8),
         isUnarmoured ? leatherMat : accentMat
       );
-      belt.position.y = -0.38;
-      belt.scale.set(1.15, 1.0, 0.83);
+      belt.position.y = -0.35;
+      belt.scale.set(1.17, 1.0, 0.85);
 
-      torso.add(abdomen, cuirass, belt);
+      const beltBuckle = new THREE.Mesh(
+        new THREE.BoxGeometry(0.13, 0.115, 0.06),
+        isUnarmoured ? buckleMat : glowMat
+      );
+      beltBuckle.position.set(0, -0.35, 0.22);
 
-      if (!isUnarmoured) {
+      torso.add(abdomen, cuirass, belt, beltBuckle);
+
+      if (isUnarmoured) {
+        // Tunic V-Collar, Cross-Chest Leather Strap & Hip Tassets
+        const tunicCollar = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.032, 5, 10), accentMat);
+        tunicCollar.rotation.x = Math.PI / 2 + 0.18;
+        tunicCollar.position.set(0, 0.42, 0.03);
+
+        const chestStrap = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.68, 0.44), leatherMat);
+        chestStrap.position.set(0, 0.06, 0);
+        chestStrap.rotation.z = 0.56;
+
+        const strapClasp = new THREE.Mesh(new THREE.OctahedronGeometry(0.055, 0), buckleMat);
+        strapClasp.position.set(-0.04, 0.14, 0.23);
+
+        const frontSash = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.36, 0.04), accentMat);
+        frontSash.position.set(0, -0.52, 0.21);
+        frontSash.rotation.x = -0.08;
+
+        [-0.27, 0.27].forEach(hx => {
+          const hipFlap = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.30, 0.28), tunicTrimMat);
+          hipFlap.position.set(hx, -0.49, 0);
+          hipFlap.rotation.z = hx < 0 ? -0.18 : 0.18;
+          torso.add(hipFlap);
+        });
+
+        torso.add(tunicCollar, chestStrap, strapClasp, frontSash);
+      } else {
         const tabard = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.46, 0.05), capeMat);
         tabard.position.set(0, -0.58, 0.22);
         tabard.rotation.x = -0.1;
 
         const sternumKeel = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.52, 4), accentMat);
-        sternumKeel.position.set(0, 0.16, 0.23);
+        sternumKeel.position.set(0, 0.16, 0.24);
         sternumKeel.rotation.x = Math.PI;
         sternumKeel.scale.set(0.85, 1.0, 0.45);
 
-        const chestCrystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), glowMat);
-        chestCrystal.position.set(0, 0.22, 0.27);
+        const chestCrystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.105, 0), glowMat);
+        chestCrystal.position.set(0, 0.23, 0.28);
 
-        const cowl = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.32, 0.16, 6), capeMat);
-        cowl.position.y = 0.44;
-        const gorget = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.26, 0.12, 6), accentMat);
-        gorget.position.y = 0.49;
+        const cowl = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.32, 0.15, 8), capeMat);
+        cowl.position.y = 0.43;
+        const gorget = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.25, 0.11, 8), accentMat);
+        gorget.position.y = 0.48;
 
         [-0.29, 0.29].forEach(tx => {
           const kama = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.42, 4), bodyMat);
@@ -2136,134 +2212,315 @@
       cape.rotation.x = 0.18;
       torso.add(cape);
 
+      // Sculpted Head, Expressive Facial Features & Multi-Layered Hair Styles
       const headGroup = new THREE.Group();
       headGroup.position.y = 0.67;
 
-      if (av.headStyle === 'bare_head') {
-        const faceShell = new THREE.Mesh(new THREE.IcosahedronGeometry(0.21, 1), skinMat);
-        faceShell.scale.set(0.92, 1.08, 0.96);
-        faceShell.castShadow = true;
+      function addSculptedHeroFace(targetHead) {
+        const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.205, 12, 10), skinMat);
+        cranium.scale.set(0.92, 1.04, 0.98);
+        cranium.position.y = 0.025;
+        cranium.castShadow = true;
 
-        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.028, 0.05), hairMat);
-        brow.position.set(0, 0.065, 0.19);
+        const jaw = new THREE.Mesh(new THREE.CylinderGeometry(0.165, 0.095, 0.15, 8), skinMat);
+        jaw.position.set(0, -0.105, 0.022);
+        jaw.scale.set(0.92, 1.0, 0.96);
 
-        [-0.072, 0.072].forEach(ex => {
-          const eye = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.03, 0.04), glowMat);
-          eye.position.set(ex, 0.025, 0.195);
-          headGroup.add(eye);
+        const chin = new THREE.Mesh(new THREE.SphereGeometry(0.072, 8, 6), skinMat);
+        chin.position.set(0, -0.165, 0.068);
+        chin.scale.set(0.95, 0.85, 0.95);
+
+        const nose = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.075, 4), skinMat);
+        nose.position.set(0, -0.025, 0.205);
+        nose.rotation.x = 0.22;
+
+        [-0.188, 0.188].forEach(ex => {
+          const ear = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.075, 0.048), skinMat);
+          ear.position.set(ex, -0.01, -0.01);
+          ear.rotation.y = ex < 0 ? -0.25 : 0.25;
+          targetHead.add(ear);
         });
-        headGroup.add(faceShell, brow);
+
+        [-0.068, 0.068].forEach(ex => {
+          const brow = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.022, 0.036), hairMat);
+          brow.position.set(ex, 0.048, 0.188);
+          brow.rotation.z = ex < 0 ? -0.12 : 0.12;
+
+          const sclera = new THREE.Mesh(new THREE.BoxGeometry(0.062, 0.032, 0.025), eyeWhiteMat);
+          sclera.position.set(ex, 0.014, 0.188);
+
+          const iris = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.030, 0.032), glowMat);
+          iris.position.set(ex * 0.96, 0.014, 0.193);
+
+          targetHead.add(brow, sclera, iris);
+        });
+
+        targetHead.add(cranium, jaw, chin, nose);
+      }
+
+      const isOpenFaceHead = av.headStyle === 'bare_head' || av.headStyle === 'valkyrie_crown';
+
+      if (av.headStyle === 'bare_head') {
+        addSculptedHeroFace(headGroup);
       } else if (av.headStyle === 'rogue_hood') {
-        const faceInner = new THREE.Mesh(new THREE.IcosahedronGeometry(0.19, 0), darkPlateMat);
+        const faceInner = new THREE.Mesh(new THREE.IcosahedronGeometry(0.185, 1), darkPlateMat);
         faceInner.scale.set(0.92, 1.08, 0.96);
-        const hoodShell = new THREE.Mesh(new THREE.ConeGeometry(0.29, 0.56, 6), capeMat);
+        const cowlCollar = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.045, 6, 10), capeMat);
+        cowlCollar.rotation.x = Math.PI / 2;
+        cowlCollar.position.set(0, -0.14, 0.01);
+        const hoodShell = new THREE.Mesh(new THREE.ConeGeometry(0.285, 0.56, 7), capeMat);
         hoodShell.position.set(0, 0.08, -0.04);
         hoodShell.rotation.x = -0.25;
         addPolyEdgeLines(hoodShell, resolvedAccent, 0.3);
-        [-0.075, 0.075].forEach(ex => {
-          const eye = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.035, 0.05), glowMat);
-          eye.position.set(ex, 0.02, 0.18);
+        [-0.072, 0.072].forEach(ex => {
+          const eye = new THREE.Mesh(new THREE.BoxGeometry(0.062, 0.030, 0.045), glowMat);
+          eye.position.set(ex, 0.018, 0.182);
           eye.rotation.z = ex < 0 ? -0.22 : 0.22;
           headGroup.add(eye);
         });
-        headGroup.add(faceInner, hoodShell);
+        headGroup.add(faceInner, cowlCollar, hoodShell);
       } else if (av.headStyle === 'valkyrie_crown') {
-        const faceShell = new THREE.Mesh(new THREE.IcosahedronGeometry(0.21, 0), skinMat);
-        faceShell.scale.set(0.92, 1.1, 0.98);
-        const diadem = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.08, 8), accentMat);
-        diadem.position.set(0, 0.12, 0);
-        [-0.22, 0.22].forEach(wx => {
-          const wing = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.34, 4), accentMat);
+        addSculptedHeroFace(headGroup);
+        const diadem = new THREE.Mesh(new THREE.CylinderGeometry(0.215, 0.215, 0.065, 10), accentMat);
+        diadem.position.set(0, 0.115, 0);
+        const frontCrest = new THREE.Mesh(new THREE.OctahedronGeometry(0.048, 0), glowMat);
+        frontCrest.position.set(0, 0.125, 0.215);
+        [-0.21, 0.21].forEach(wx => {
+          const wing = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.34, 4), accentMat);
           wing.position.set(wx, 0.18, -0.04);
           wing.rotation.z = wx < 0 ? 0.55 : -0.55;
           wing.rotation.x = -0.35;
           headGroup.add(wing);
         });
-        [-0.07, 0.07].forEach(ex => {
-          const eye = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.032, 0.04), glowMat);
-          eye.position.set(ex, 0.02, 0.20);
-          headGroup.add(eye);
-        });
-        headGroup.add(faceShell, diadem);
+        headGroup.add(diadem, frontCrest);
       } else if (av.headStyle === 'shogun_menpo') {
-        const kabuto = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.62), bodyMat);
+        const kabuto = new THREE.Mesh(new THREE.SphereGeometry(0.235, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.62), bodyMat);
         kabuto.position.y = 0.04;
         addPolyEdgeLines(kabuto, resolvedAccent, 0.35);
-        const menpo = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 0.22), darkPlateMat);
+        const neckGuard = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.14, 8, 1, true, Math.PI * 0.65, Math.PI * 1.7), bodyMat);
+        neckGuard.position.set(0, -0.04, -0.02);
+        const menpo = new THREE.Mesh(new THREE.BoxGeometry(0.27, 0.15, 0.21), darkPlateMat);
         menpo.position.set(0, -0.08, 0.08);
-        const maedate = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.025, 4, 8, Math.PI), accentMat);
+        const maedate = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.024, 5, 10, Math.PI), accentMat);
         maedate.position.set(0, 0.20, 0.20);
         maedate.rotation.z = Math.PI;
-        [-0.075, 0.075].forEach(ex => {
-          const eye = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.035, 0.05), glowMat);
-          eye.position.set(ex, 0.02, 0.21);
+        [-0.072, 0.072].forEach(ex => {
+          const eye = new THREE.Mesh(new THREE.BoxGeometry(0.062, 0.032, 0.048), glowMat);
+          eye.position.set(ex, 0.018, 0.205);
           headGroup.add(eye);
         });
-        headGroup.add(kabuto, menpo, maedate);
+        headGroup.add(kabuto, neckGuard, menpo, maedate);
       } else if (av.headStyle === 'cyber_optic') {
-        const helmShell = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.42, 0.42), bodyMat);
+        const helmShell = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.41, 0.41), bodyMat);
         addPolyEdgeLines(helmShell, resolvedAccent, 0.35);
-        const opticBand = new THREE.Mesh(new THREE.BoxGeometry(0.41, 0.09, 0.34), glowMat);
+        const chinGuard = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 0.36), darkPlateMat);
+        chinGuard.position.set(0, -0.16, 0.04);
+        const opticBand = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.085, 0.33), glowMat);
         opticBand.position.set(0, 0.04, 0.06);
-        [-0.21, 0.21].forEach(ex => {
-          const earPod = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.06, 6), accentMat);
+        [-0.205, 0.205].forEach(ex => {
+          const earPod = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.055, 8), accentMat);
           earPod.rotation.z = Math.PI / 2;
           earPod.position.set(ex, 0.02, 0);
           headGroup.add(earPod);
         });
-        headGroup.add(helmShell, opticBand);
+        headGroup.add(helmShell, chinGuard, opticBand);
       } else {
-        const helmShell = new THREE.Mesh(new THREE.IcosahedronGeometry(0.23, 0), bodyMat);
+        const helmShell = new THREE.Mesh(new THREE.IcosahedronGeometry(0.23, 1), bodyMat);
         helmShell.scale.set(0.95, 1.12, 1.05);
         helmShell.castShadow = true;
         addPolyEdgeLines(helmShell, resolvedAccent, 0.32);
 
-        const vVisor = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.065, 0.09), glowMat);
-        vVisor.position.set(0, 0.02, 0.20);
+        const browPlate = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.045, 0.14), darkPlateMat);
+        browPlate.position.set(0, 0.068, 0.175);
+        browPlate.rotation.x = 0.18;
 
-        const crestFin = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.24, 0.42), accentMat);
+        const vVisor = new THREE.Mesh(new THREE.BoxGeometry(0.29, 0.058, 0.09), glowMat);
+        vVisor.position.set(0, 0.018, 0.20);
+
+        const crestFin = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.23, 0.41), accentMat);
         crestFin.position.set(0, 0.23, -0.03);
 
-        [-0.21, 0.21].forEach(fx => {
-          const templeFin = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.26, 4), accentMat);
+        [-0.205, 0.205].forEach(fx => {
+          const templeFin = new THREE.Mesh(new THREE.ConeGeometry(0.048, 0.25, 4), accentMat);
           templeFin.position.set(fx, 0.08, -0.04);
           templeFin.rotation.x = -0.65;
           templeFin.rotation.z = fx < 0 ? 0.25 : -0.25;
           headGroup.add(templeFin);
         });
-        headGroup.add(helmShell, vVisor, crestFin);
+        headGroup.add(helmShell, browPlate, vVisor, crestFin);
       }
 
-      // Customizable Hair / Crest Plume Style
+      function addFittedHairCap(opts = {}) {
+        if (!isOpenFaceHead) return;
+        const cap = new THREE.Mesh(
+          new THREE.SphereGeometry(0.218, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.62),
+          hairMat
+        );
+        cap.scale.set(0.95, 1.04, 1.03);
+        cap.position.set(0, 0.036, -0.012);
+        headGroup.add(cap);
+
+        if (!opts.shavedSides) {
+          const backNape = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.195, 0.175, 0.19, 8, 1, false, Math.PI * 0.62, Math.PI * 0.76),
+            hairShadowMat
+          );
+          backNape.position.set(0, -0.05, -0.025);
+          headGroup.add(backNape);
+
+          [-0.178, 0.178].forEach(sx => {
+            const sideLock = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.17, 5), hairMat);
+            sideLock.position.set(sx, -0.03, 0.085);
+            sideLock.rotation.x = Math.PI - 0.14;
+            sideLock.rotation.z = sx < 0 ? 0.12 : -0.12;
+            headGroup.add(sideLock);
+          });
+        }
+      }
+
+      // 3D Sculpted Hair Styles
       if (av.hairStyle === 'spiky_plume') {
-        for (let p = 0; p < 3; p++) {
-          const spike = new THREE.Mesh(new THREE.ConeGeometry(0.085 - p * 0.015, 0.38 - p * 0.05, 5), hairMat);
-          spike.position.set(0, 0.27 - p * 0.04, -0.08 - p * 0.11);
-          spike.rotation.x = -0.65 - p * 0.18;
-          headGroup.add(spike);
+        addFittedHairCap();
+        if (isOpenFaceHead) {
+          for (let b = -2; b <= 2; b++) {
+            const bang = new THREE.Mesh(new THREE.ConeGeometry(0.044, 0.16 - Math.abs(b) * 0.015, 5), hairMat);
+            bang.position.set(b * 0.052, 0.135, 0.165 - Math.abs(b) * 0.018);
+            bang.rotation.x = 2.35;
+            bang.rotation.z = b * -0.22;
+            headGroup.add(bang);
+          }
+          const crownSpikes = [
+            { x: 0, y: 0.29, z: 0.02, rx: 0.25, rz: 0, h: 0.24, r: 0.075 },
+            { x: -0.11, y: 0.26, z: -0.03, rx: -0.25, rz: 0.42, h: 0.22, r: 0.068 },
+            { x: 0.11, y: 0.26, z: -0.03, rx: -0.25, rz: -0.42, h: 0.22, r: 0.068 },
+            { x: 0, y: 0.24, z: -0.14, rx: -0.78, rz: 0, h: 0.28, r: 0.082 },
+            { x: -0.10, y: 0.16, z: -0.18, rx: -1.15, rz: 0.32, h: 0.24, r: 0.068 },
+            { x: 0.10, y: 0.16, z: -0.18, rx: -1.15, rz: -0.32, h: 0.24, r: 0.068 }
+          ];
+          crownSpikes.forEach(sp => {
+            const spike = new THREE.Mesh(new THREE.ConeGeometry(sp.r, sp.h, 5), hairMat);
+            spike.position.set(sp.x, sp.y, sp.z);
+            spike.rotation.set(sp.rx, 0, sp.rz);
+            headGroup.add(spike);
+          });
+        } else {
+          for (let p = 0; p < 3; p++) {
+            const spike = new THREE.Mesh(new THREE.ConeGeometry(0.085 - p * 0.015, 0.38 - p * 0.05, 5), hairMat);
+            spike.position.set(0, 0.27 - p * 0.04, -0.08 - p * 0.11);
+            spike.rotation.x = -0.65 - p * 0.18;
+            headGroup.add(spike);
+          }
         }
       } else if (av.hairStyle === 'ponytail_crest') {
-        const knot = new THREE.Mesh(new THREE.OctahedronGeometry(0.08, 0), accentMat);
-        knot.position.set(0, 0.25, -0.14);
-        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.56, 6), hairMat);
-        tail.position.set(0, 0.02, -0.28);
-        tail.rotation.x = -2.65;
-        headGroup.add(knot, tail);
+        addFittedHairCap();
+        if (isOpenFaceHead) {
+          [-0.075, 0.035, 0.105].forEach((bx, idx) => {
+            const fringe = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.15, 5), hairMat);
+            fringe.position.set(bx, 0.125, 0.175);
+            fringe.rotation.set(2.48, 0, idx === 0 ? 0.35 : -0.38);
+            headGroup.add(fringe);
+          });
+        }
+        const knot = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.022, 6, 10), accentMat);
+        knot.position.set(0, 0.21, -0.17);
+        knot.rotation.x = 0.65;
+        const upperTail = new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.28, 7), hairMat);
+        upperTail.position.set(0, 0.14, -0.25);
+        upperTail.rotation.x = -2.25;
+        const lowerTail = new THREE.Mesh(new THREE.ConeGeometry(0.072, 0.38, 7), hairShadowMat);
+        lowerTail.position.set(0, -0.04, -0.32);
+        lowerTail.rotation.x = -2.85;
+        headGroup.add(knot, upperTail, lowerTail);
+      } else if (av.hairStyle === 'wavy_locks') {
+        addFittedHairCap();
+        if (isOpenFaceHead) {
+          [-0.085, 0.085].forEach(fx => {
+            const curtain = new THREE.Mesh(new THREE.ConeGeometry(0.058, 0.19, 6), hairMat);
+            curtain.position.set(fx, 0.11, 0.17);
+            curtain.rotation.set(2.55, 0, fx < 0 ? 0.32 : -0.32);
+            headGroup.add(curtain);
+          });
+          [-0.175, 0.175].forEach(cx => {
+            const lock = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.022, 0.28, 6), hairMat);
+            lock.position.set(cx, -0.07, 0.105);
+            lock.rotation.z = cx < 0 ? -0.12 : 0.12;
+            headGroup.add(lock);
+          });
+        }
+        [-0.09, 0, 0.09].forEach((mx, idx) => {
+          const wave = new THREE.Mesh(new THREE.ConeGeometry(0.082, 0.42 + (idx === 1 ? 0.06 : 0), 6), idx === 1 ? hairMat : hairShadowMat);
+          wave.position.set(mx, 0.01, -0.21);
+          wave.rotation.x = -2.88;
+          wave.rotation.z = mx * 0.6;
+          headGroup.add(wave);
+        });
+      } else if (av.hairStyle === 'samurai_topknot') {
+        addFittedHairCap({ shavedSides: true });
+        if (isOpenFaceHead) {
+          [-0.13, 0.13].forEach(sx => {
+            const sweep = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.22), hairShadowMat);
+            sweep.position.set(sx, 0.08, 0.02);
+            sweep.rotation.y = sx < 0 ? -0.25 : 0.25;
+            headGroup.add(sweep);
+          });
+        }
+        const bunRing = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.075, 0.06, 8), accentMat);
+        bunRing.position.set(0, 0.255, -0.03);
+        const topBun = new THREE.Mesh(new THREE.SphereGeometry(0.082, 8, 8), hairMat);
+        topBun.scale.set(0.95, 1.15, 1.1);
+        topBun.position.set(0, 0.31, -0.04);
+        const hairPin = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.26, 6), accentMat);
+        hairPin.rotation.z = Math.PI / 2;
+        hairPin.position.set(0, 0.30, -0.04);
+        const knotTail = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.28, 6), hairShadowMat);
+        knotTail.position.set(0, 0.22, -0.17);
+        knotTail.rotation.x = -2.2;
+        headGroup.add(bunRing, topBun, hairPin, knotTail);
+      } else if (av.hairStyle === 'braided_crown') {
+        addFittedHairCap();
+        const crownBraid = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.034, 6, 14), hairMat);
+        crownBraid.rotation.x = Math.PI / 2 + 0.15;
+        crownBraid.position.set(0, 0.12, -0.01);
+        headGroup.add(crownBraid);
+
+        [-0.165, 0.165].forEach(bx => {
+          for (let seg = 0; seg < 4; seg++) {
+            const bead = new THREE.Mesh(new THREE.OctahedronGeometry(0.036 - seg * 0.004, 0), seg % 2 === 0 ? hairMat : hairShadowMat);
+            bead.position.set(bx * (1 - seg * 0.04), -0.02 - seg * 0.075, 0.125 + seg * 0.018);
+            headGroup.add(bead);
+          }
+          const clasp = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.035, 6), accentMat);
+          clasp.position.set(bx * 0.85, -0.31, 0.195);
+          headGroup.add(clasp);
+        });
       } else if (av.hairStyle === 'mohawk_fin') {
-        for (let m = 0; m < 5; m++) {
-          const fin = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.24, 4), hairMat);
-          const ang = -0.45 + m * 0.24;
-          fin.position.set(0, Math.cos(ang) * 0.28, Math.sin(ang) * 0.28);
+        addFittedHairCap({ shavedSides: true });
+        for (let m = 0; m < 6; m++) {
+          const fin = new THREE.Mesh(new THREE.ConeGeometry(0.046, 0.25 - m * 0.012, 4), m % 2 === 0 ? hairMat : hairShadowMat);
+          const ang = -0.52 + m * 0.24;
+          fin.position.set(0, Math.cos(ang) * 0.275, Math.sin(ang) * 0.275);
           fin.rotation.x = ang;
           headGroup.add(fin);
         }
       } else if (av.hairStyle === 'twin_tails') {
-        [-0.18, 0.18].forEach(tx => {
-          const streamer = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.52, 5), hairMat);
-          streamer.position.set(tx * 1.25, 0.04, -0.20);
+        addFittedHairCap();
+        if (isOpenFaceHead) {
+          [-0.06, 0, 0.06].forEach(bx => {
+            const bang = new THREE.Mesh(new THREE.ConeGeometry(0.038, 0.14, 5), hairMat);
+            bang.position.set(bx, 0.125, 0.18);
+            bang.rotation.x = 2.55;
+            headGroup.add(bang);
+          });
+        }
+        [-0.185, 0.185].forEach(tx => {
+          const band = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.018, 5, 8), accentMat);
+          band.position.set(tx * 1.12, 0.18, -0.10);
+          band.rotation.y = tx < 0 ? 0.5 : -0.5;
+          const streamer = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.52, 6), hairMat);
+          streamer.position.set(tx * 1.32, 0.02, -0.18);
           streamer.rotation.x = -2.65;
-          streamer.rotation.z = tx < 0 ? 0.28 : -0.28;
-          headGroup.add(streamer);
+          streamer.rotation.z = tx < 0 ? 0.26 : -0.26;
+          headGroup.add(band, streamer);
         });
       }
 
@@ -2287,63 +2544,83 @@
       }
       torso.add(headGroup);
 
-      const rightArm = new THREE.Group();
-      rightArm.position.set(-0.49, 0.34, 0);
-      const rBicep = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.085, 0.30, isUnarmoured ? 6 : 4), isUnarmoured ? skinMat : darkPlateMat);
-      rBicep.position.y = -0.18;
-      const rGauntlet = new THREE.Mesh(
-        new THREE.CylinderGeometry(isUnarmoured ? 0.085 : 0.12, isUnarmoured ? 0.072 : 0.085, 0.32, isUnarmoured ? 6 : 4),
-        isUnarmoured ? skinMat : bodyMat
-      );
-      rGauntlet.position.y = -0.46;
-      if (isUnarmoured) {
-        const rSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.105, 0.11, 6), bodyMat);
-        rSleeve.position.y = -0.06;
-        const rWristWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.078, 0.09, 6), leatherMat);
-        rWristWrap.position.y = -0.56;
-        rightArm.add(rSleeve, rWristWrap);
-      } else {
-        const rPauldronTop = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.30, 4), accentMat);
-        rPauldronTop.position.set(-0.04, 0.06, 0);
-        rPauldronTop.rotation.z = 0.38;
-        const rPauldronSub = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.16, 4), bodyMat);
-        rPauldronSub.position.set(-0.04, -0.06, 0);
-        addPolyEdgeLines(rGauntlet, resolvedAccent, 0.25);
-        rightArm.add(rPauldronTop, rPauldronSub);
-      }
-      rightArm.add(rBicep, rGauntlet);
+      // Articulated Arms, Deltoid Shoulders, Elbows & Weapon-Gripping Hands
+      function buildArticulatedArm(sideSign) {
+        const armGroup = new THREE.Group();
+        armGroup.position.set(sideSign * 0.49, 0.34, 0);
 
+        const shoulderJoint = new THREE.Mesh(
+          new THREE.SphereGeometry(isUnarmoured ? 0.115 : 0.135, 8, 8),
+          isUnarmoured ? skinMat : darkPlateMat
+        );
+        armGroup.add(shoulderJoint);
+
+        const bicep = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.098, 0.086, 0.28, isUnarmoured ? 8 : 6),
+          isUnarmoured ? skinMat : darkPlateMat
+        );
+        bicep.position.y = -0.16;
+
+        const elbow = new THREE.Mesh(
+          new THREE.SphereGeometry(0.088, 8, 6),
+          isUnarmoured ? skinMat : accentMat
+        );
+        elbow.position.y = -0.31;
+
+        const forearm = new THREE.Mesh(
+          new THREE.CylinderGeometry(isUnarmoured ? 0.086 : 0.115, isUnarmoured ? 0.072 : 0.084, 0.27, isUnarmoured ? 8 : 6),
+          isUnarmoured ? skinMat : bodyMat
+        );
+        forearm.position.y = -0.45;
+
+        const handGroup = new THREE.Group();
+        handGroup.position.set(0, -0.58, 0.03);
+        const palm = new THREE.Mesh(
+          new THREE.BoxGeometry(0.095, 0.105, 0.115),
+          isUnarmoured ? leatherMat : darkPlateMat
+        );
+        const knuckles = new THREE.Mesh(
+          new THREE.BoxGeometry(0.102, 0.055, 0.05),
+          isUnarmoured ? skinMat : accentMat
+        );
+        knuckles.position.set(0, -0.015, 0.055);
+        const thumb = new THREE.Mesh(
+          new THREE.BoxGeometry(0.038, 0.045, 0.065),
+          isUnarmoured ? skinMat : accentMat
+        );
+        thumb.position.set(sideSign * -0.048, 0.025, 0.035);
+        handGroup.add(palm, knuckles, thumb);
+
+        if (isUnarmoured) {
+          const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.118, 0.112, 0.13, 8), bodyMat);
+          sleeve.position.y = -0.05;
+          const sleeveTrim = new THREE.Mesh(new THREE.TorusGeometry(0.112, 0.016, 5, 10), accentMat);
+          sleeveTrim.rotation.x = Math.PI / 2;
+          sleeveTrim.position.y = -0.11;
+          const wristWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.078, 0.09, 8), leatherMat);
+          wristWrap.position.y = -0.53;
+          armGroup.add(sleeve, sleeveTrim, wristWrap);
+        } else {
+          const pauldronTop = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.30, 5), accentMat);
+          pauldronTop.position.set(sideSign * 0.04, 0.06, 0);
+          pauldronTop.rotation.z = sideSign * -0.38;
+          const pauldronSub = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.16, 6), bodyMat);
+          pauldronSub.position.set(sideSign * 0.04, -0.06, 0);
+          addPolyEdgeLines(forearm, resolvedAccent, 0.25);
+          armGroup.add(pauldronTop, pauldronSub);
+        }
+
+        armGroup.add(bicep, elbow, forearm, handGroup);
+        return armGroup;
+      }
+
+      const rightArm = buildArticulatedArm(-1);
       const weaponMesh = buildDetailedWeaponMesh(wep, accentMat);
       weaponMesh.position.set(0, -0.58, 0.14);
       rightArm.add(weaponMesh);
       torso.add(rightArm);
 
-      const leftArm = new THREE.Group();
-      leftArm.position.set(0.49, 0.34, 0);
-      const lBicep = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.085, 0.30, isUnarmoured ? 6 : 4), isUnarmoured ? skinMat : darkPlateMat);
-      lBicep.position.y = -0.18;
-      const lGauntlet = new THREE.Mesh(
-        new THREE.CylinderGeometry(isUnarmoured ? 0.085 : 0.12, isUnarmoured ? 0.072 : 0.085, 0.32, isUnarmoured ? 6 : 4),
-        isUnarmoured ? skinMat : bodyMat
-      );
-      lGauntlet.position.y = -0.46;
-      if (isUnarmoured) {
-        const lSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.105, 0.11, 6), bodyMat);
-        lSleeve.position.y = -0.06;
-        const lWristWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.078, 0.09, 6), leatherMat);
-        lWristWrap.position.y = -0.56;
-        leftArm.add(lSleeve, lWristWrap);
-      } else {
-        const lPauldronTop = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.30, 4), accentMat);
-        lPauldronTop.position.set(0.04, 0.06, 0);
-        lPauldronTop.rotation.z = -0.38;
-        const lPauldronSub = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.16, 4), bodyMat);
-        lPauldronSub.position.set(0.04, -0.06, 0);
-        addPolyEdgeLines(lGauntlet, resolvedAccent, 0.25);
-        leftArm.add(lPauldronTop, lPauldronSub);
-      }
-      leftArm.add(lBicep, lGauntlet);
-
+      const leftArm = buildArticulatedArm(1);
       let offWeaponMesh = null;
       if (wep.grip === 'dual') {
         offWeaponMesh = buildDetailedWeaponMesh(wep, accentMat);
@@ -2354,36 +2631,72 @@
       }
       torso.add(leftArm);
 
+      // Articulated Legs, Hip Joints, Knees & Multi-Part Combat Boots
       function buildArticulatedLeg(sideSign) {
         const legGroup = new THREE.Group();
         legGroup.position.set(sideSign * 0.19, 0.78, 0);
 
+        const hipJoint = new THREE.Mesh(
+          new THREE.SphereGeometry(0.142, 8, 8),
+          isUnarmoured ? trouserMat : darkPlateMat
+        );
+        legGroup.add(hipJoint);
+
         const thigh = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.135, 0.11, 0.36, isUnarmoured ? 6 : 4),
+          new THREE.CylinderGeometry(0.152, 0.122, 0.36, isUnarmoured ? 8 : 6),
           isUnarmoured ? trouserMat : darkPlateMat
         );
         thigh.position.y = -0.18;
-        thigh.rotation.y = Math.PI / 4;
         thigh.castShadow = true;
 
+        const kneeJoint = new THREE.Mesh(
+          new THREE.SphereGeometry(0.116, 8, 6),
+          isUnarmoured ? trouserMat : darkPlateMat
+        );
+        kneeJoint.position.y = -0.36;
+
+        const kneeGuard = new THREE.Mesh(
+          new THREE.OctahedronGeometry(isUnarmoured ? 0.095 : 0.118, 0),
+          isUnarmoured ? leatherMat : accentMat
+        );
+        kneeGuard.position.set(0, -0.36, 0.075);
+        kneeGuard.scale.set(0.95, 1.05, 0.75);
+
         const greave = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.115, 0.09, 0.36, isUnarmoured ? 6 : 4),
+          new THREE.CylinderGeometry(0.126, 0.094, 0.34, isUnarmoured ? 8 : 6),
           isUnarmoured ? trouserMat : bodyMat
         );
-        greave.position.y = -0.55;
-        greave.rotation.y = Math.PI / 4;
+        greave.position.y = -0.53;
         greave.castShadow = true;
         if (!isUnarmoured) {
-          const kneeGuard = new THREE.Mesh(new THREE.OctahedronGeometry(0.115, 0), accentMat);
-          kneeGuard.position.set(0, -0.36, 0.07);
           addPolyEdgeLines(greave, resolvedAccent, 0.25);
-          legGroup.add(kneeGuard);
         }
 
-        const boot = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.13, 0.31), isUnarmoured ? leatherMat : accentMat);
-        boot.position.set(0, -0.71, 0.05);
+        const bootCuff = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.106, 0.102, 0.08, 8),
+          isUnarmoured ? leatherMat : accentMat
+        );
+        bootCuff.position.set(0, -0.64, 0.01);
 
-        legGroup.add(thigh, greave, boot);
+        const bootUpper = new THREE.Mesh(
+          new THREE.BoxGeometry(0.195, 0.105, 0.28),
+          isUnarmoured ? leatherMat : bodyMat
+        );
+        bootUpper.position.set(0, -0.70, 0.045);
+
+        const bootToe = new THREE.Mesh(
+          new THREE.BoxGeometry(0.185, 0.085, 0.12),
+          isUnarmoured ? buckleMat : accentMat
+        );
+        bootToe.position.set(0, -0.71, 0.165);
+
+        const bootSole = new THREE.Mesh(
+          new THREE.BoxGeometry(0.21, 0.036, 0.34),
+          darkPlateMat
+        );
+        bootSole.position.set(0, -0.762, 0.055);
+
+        legGroup.add(thigh, kneeJoint, kneeGuard, greave, bootCuff, bootUpper, bootToe, bootSole);
         return legGroup;
       }
 
